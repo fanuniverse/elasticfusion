@@ -9,6 +9,8 @@ defmodule Elasticfusion.Search.ElasticQueryTest do
 
     def index_name(), do: "elastic_query_test_index"
 
+    def document_type(), do: "elastic_query_test_type"
+
     def settings(), do: %{number_of_shards: 1}
 
     def mapping() do

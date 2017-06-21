@@ -8,6 +8,9 @@ use Mix.Config
 # if you want to provide default values for your application for
 # 3rd-party users, it should be done in your "mix.exs" file.
 
+config :elasticfusion,
+  endpoint: "http://localhost:9200"
+
 # You can configure for your application as:
 #
 #     config :elasticfusion, key: :value

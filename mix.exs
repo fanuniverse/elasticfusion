@@ -28,6 +28,9 @@ defmodule Elasticfusion.Mixfile do
   #
   # Type "mix help deps" for more examples and options
   defp deps do
-    [{:gate, git: "https://github.com/ananthakumaran/gate", manager: :rebar}]
+    [
+      {:elastix, "~> 0.4.0"},
+      {:gate, git: "https://github.com/ananthakumaran/gate", manager: :rebar}
+    ]
   end
 end
