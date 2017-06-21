@@ -8,20 +8,20 @@ defmodule Elasticfusion.Search.ElasticQueryTest do
     @behaviour Elasticfusion.Index
 
     def index_name(), do: "elastic_query_test_index"
-    def definition() do
+
+    def settings(), do: %{number_of_shards: 1}
+
+    def mapping() do
       %{
-        settings: %{
-          number_of_shards: 1
-        },
-        properties: %{
-          "id" => %{type: :integer},
-          "tags" => %{type: :keyword},
-          "stars" => %{type: :integer},
-          "date" => %{type: :date}
-        }
+        "id" => %{type: :integer},
+        "tags" => %{type: :keyword},
+        "stars" => %{type: :integer},
+        "date" => %{type: :date}
       }
     end
+
     def keyword_field(), do: "tags"
+
     def serialize(_), do: nil
   end
 

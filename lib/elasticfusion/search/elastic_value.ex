@@ -1,6 +1,6 @@
 defmodule Elasticfusion.Search.ElasticValue do
   def es_value(raw_value, field, index) do
-    case index.definition()[:properties][field] do
+    case index.mapping()[field] do
       %{type: :date} ->
         date(raw_value)
       _ ->
