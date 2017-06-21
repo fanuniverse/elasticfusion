@@ -1,0 +1,2 @@
+defmodule Elasticfusion do
+end
