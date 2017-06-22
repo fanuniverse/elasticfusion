@@ -1,5 +1,7 @@
 # Elasticfusion
 
+[![Build Status](https://travis-ci.org/fanuniverse/elasticfusion.svg?branch=master)](https://travis-ci.org/fanuniverse/elasticfusion)
+
 A collection of Elixir-flavored Elasticsearch extensions based on the
 [elasticfusion](https://github.com/little-bobby-tables/elasticfusion) Ruby Gem.
 
