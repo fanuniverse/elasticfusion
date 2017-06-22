@@ -1,0 +1,27 @@
+dist: trusty
+
+sudo: false
+
+language: elixir
+
+elixir:
+  - 1.4.4
+
+otp_release:
+  - 19.1
+
+jdk: openjdk8
+
+env:
+  - ES_VERSION=5.4.1 ES_DOWNLOAD_URL=https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-${ES_VERSION}.tar.gz
+
+install:
+  - wget ${ES_DOWNLOAD_URL}
+  - tar -xzf elasticsearch-${ES_VERSION}.tar.gz
+  - ./elasticsearch-${ES_VERSION}/bin/elasticsearch &
+  - mix local.hex --force
+  - mix local.rebar --force
+  - mix deps.get
+
+script:
+  - mix test
