@@ -26,6 +26,9 @@ defmodule Elasticfusion.Index do
   `c:keyword_field/0` specifies the name of the field
   used for keyword queries ("keyword one, keyword two").
 
+  `c:queryable_fields/0` specifies the names of the fields
+  that can occur in string queries ("field: value").
+
   `c:serialize/1` serializes a struct for indexing. It
   should return a map containing all fields in the mapping
   and their corresponding values. See `Elasticfusion.Document`
@@ -41,6 +44,8 @@ defmodule Elasticfusion.Index do
   @callback mapping() :: map
 
   @callback keyword_field() :: binary
+
+  @callback queryable_fields() :: list(binary)
 
   @callback serialize(struct) :: map
 end

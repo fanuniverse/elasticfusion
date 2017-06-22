@@ -4,17 +4,13 @@ defmodule Elasticfusion.IndexAPITest do
   import Elasticfusion.IndexAPI
 
   defmodule IndexAPITestIndex do
-    def index_name(), do: "index_api_test_index"
-
-    def document_type(), do: "index_api_test_type"
-
-    def settings(), do: %{number_of_shards: 2}
-
-    def mapping(), do: %{"inserted_at" => %{type: :date}}
-
-    def keyword_field(), do: "tags"
-
-    def serialize(_), do: nil
+    def index_name(),       do: "index_api_test_index"
+    def document_type(),    do: "index_api_test_type"
+    def settings(),         do: %{number_of_shards: 2}
+    def mapping(),          do: %{"inserted_at" => %{type: :date}}
+    def keyword_field(),    do: "tags"
+    def queryable_fields(), do: []
+    def serialize(_),       do: nil
   end
 
   setup do

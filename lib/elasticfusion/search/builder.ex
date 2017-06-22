@@ -13,7 +13,7 @@ defmodule Elasticfusion.Search.Builder do
   def parse_search_string(str, index) do
     query =
       str
-      |> Parser.query([]) # TODO: queryable fields
+      |> Parser.query(index.queryable_fields())
       |> ElasticQuery.build(index)
 
     # NOTE IMPORTANT: The subset of queries that is currently supported
@@ -57,8 +57,14 @@ defmodule Elasticfusion.Search.Builder do
   See https://www.elastic.co/guide/en/elasticsearch/reference/current/query-filter-context.html
   """
   def add_query_clause(query, clause) do
-    Map.update(query[:bool], :must, [clause],
-      fn(queries) -> queries ++ [clause] end)
+    query = if query[:query],
+      do: query, else: put_in(query[:query], %{})
+    query = if query[:query][:bool],
+      do: query, else: put_in(query[:query][:bool], %{})
+
+    if query[:query][:bool][:must],
+      do: update_in(query[:query][:bool][:must], &(&1 ++ [clause])),
+      else: put_in(query[:query][:bool][:must], [clause])
   end
 
   @doc """
@@ -66,8 +72,14 @@ defmodule Elasticfusion.Search.Builder do
   See https://www.elastic.co/guide/en/elasticsearch/reference/current/query-filter-context.html
   """
   def add_filter_clause(query, clause) do
-    Map.update(query[:bool], :filter, [clause],
-      fn(filters) -> filters ++ [clause] end)
+    query = if query[:query],
+      do: query, else: put_in(query[:query], %{})
+    query = if query[:query][:bool],
+      do: query, else: put_in(query[:query][:bool], %{})
+
+    if query[:query][:bool][:filter],
+      do: update_in(query[:query][:bool][:filter], &(&1 ++ [clause])),
+      else: put_in(query[:query][:bool][:filter], [clause])
   end
 
   @doc """

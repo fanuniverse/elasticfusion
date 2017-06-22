@@ -9,20 +9,18 @@ defmodule Elasticfusion.DocumentTest do
   end
 
   defmodule DocumentTestIndex do
-    def index_name(), do: "document_test_index"
-
-    def document_type(), do: "document_test_type"
-
-    def settings(), do: %{number_of_shards: 1}
-
-    def mapping(), do: %{
-      "tags" => %{type: :keyword},
-      "stars" => %{type: :integer},
-      "date" => %{type: :date}
-    }
-
-    def keyword_field(), do: "tags"
-
+    def index_name(),       do: "document_test_index"
+    def document_type(),    do: "document_test_type"
+    def settings(),         do: %{number_of_shards: 1}
+    def mapping() do
+      %{
+        "tags" => %{type: :keyword},
+        "stars" => %{type: :integer},
+        "date" => %{type: :date}
+      }
+    end
+    def keyword_field(),    do: "tags"
+    def queryable_fields(), do: []
     def serialize(%Record{tags: tags, stars: stars, date: date}) do
       %{"tags" => tags, "stars" => stars, "date" => date}
     end
@@ -35,7 +33,7 @@ defmodule Elasticfusion.DocumentTest do
 
   test "index/2 and remove/2" do
     test_record = %Record{
-      id: 7, tags: "tag1, tag2", stars: 50, date: ~N[2017-02-03 16:20:00]}
+      id: 7, tags: ~w(tag1 tag2), stars: 50, date: ~N[2017-02-03 16:20:00]}
 
     assert :ok = Document.index(test_record, DocumentTestIndex)
     Elastix.Index.refresh("localhost:9200", DocumentTestIndex.index_name())
@@ -47,7 +45,7 @@ defmodule Elasticfusion.DocumentTest do
             "_source" => %{
               "date" => "2017-02-03T16:20:00",
               "stars" => 50,
-              "tags" => "tag1, tag2"
+              "tags" => ~w(tag1 tag2)
           }}]}
         }}} =
       Elastix.Search.search("localhost:9200",
