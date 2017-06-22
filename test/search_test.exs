@@ -67,7 +67,7 @@ defmodule Elasticfusion.SearchTest do
     indexed(%Record{id: 7,
       tags: ["peridot", "lapis lazuli"], stars: 30, date: ~N[2017-02-03 16:20:00]})
     indexed(%Record{id: 8,
-      tags: ["peridot", "lapis lazuli", "ruby"], stars: 30, date: ~N[2017-02-03 16:20:00]})
+      tags: ["peridot", "lapis lazuli", "ruby"], stars: 40, date: ~N[2017-02-03 16:20:00]})
 
     query =
       %{}
@@ -76,6 +76,11 @@ defmodule Elasticfusion.SearchTest do
       |> Builder.add_query_clause(%{term: %{"tags" => "lapis lazuli"}})
 
     assert Search.find_ids(query, SearchTestIndex) == {:ok, ["7", "8"]}
+
+    query =
+      Builder.add_sort(query, :stars, :desc)
+
+    assert Search.find_ids(query, SearchTestIndex) == {:ok, ["8", "7"]}
 
     query =
       Builder.add_filter_clause(query, %{term: %{"tags" => "ruby"}})

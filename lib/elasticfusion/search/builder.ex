@@ -85,7 +85,7 @@ defmodule Elasticfusion.Search.Builder do
   @doc """
   Appends a sort clause to a given Elasticsearch query.
   """
-  def sort_by(query, field, direction) when direction in [:asc, :desc] do
+  def add_sort(query, field, direction) when direction in [:asc, :desc] do
     sort = %{field => direction}
 
     Map.update(query, :sort, [sort],
