@@ -22,15 +22,16 @@ mix test
 
 ## Installation
 
-If [available in Hex](https://hex.pm/docs/publish), the package can be installed
-by adding `elasticfusion` to your list of dependencies in `mix.exs`:
+Add `elasticfusion` to your list of dependencies in `mix.exs`:
 
 ```elixir
 def deps do
-  [{:elasticfusion, "~> 0.1.0"}]
+  [{:elasticfusion, git: "https://github.com/fanuniverse/elasticfusion"}]
 end
 ```
 
-Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
-and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
-be found at [https://hexdocs.pm/elasticfusion](https://hexdocs.pm/elasticfusion).
+Specify your Elasticsearch endpoint in `config.exs`:
+
+```elixir
+config :elasticfusion, endpoint: "http://localhost:9200"
+```
