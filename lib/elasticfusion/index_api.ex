@@ -1,4 +1,6 @@
 defmodule Elasticfusion.IndexAPI do
+  import Elasticfusion.Utils, only: [status: 1]
+
   def create_index(index) do
     with :ok <- create_index_only(index),
          :ok <- put_mapping(index),
@@ -25,8 +27,4 @@ defmodule Elasticfusion.IndexAPI do
       Application.get_env(:elasticfusion, :endpoint),
       index.index_name()))
   end
-
-  defp status({:ok, %HTTPoison.Response{status_code: 200}}), do: :ok
-  defp status({:ok, error_response}), do: {:error, error_response}
-  defp status(connection_error), do: connection_error
 end
