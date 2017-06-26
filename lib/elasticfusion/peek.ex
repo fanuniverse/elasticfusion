@@ -21,7 +21,7 @@ defmodule Elasticfusion.Peek do
       |> Search.find_ids(index)
 
     case response do
-      {:ok, ids} when is_list(ids) ->
+      {:ok, ids, _count} when is_list(ids) ->
         {:ok, List.first(ids)}
       error ->
         error
