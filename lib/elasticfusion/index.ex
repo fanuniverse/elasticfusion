@@ -107,9 +107,8 @@ defmodule Elasticfusion.Index do
           value when not is_nil(value) ->
             quote do: (def unquote(required_attr)(), do: unquote(value))
           _ ->
-            raise """
-            #{required_attr} is not specified; set it using `#{required_attr}/1`
-            """
+            raise "#{required_attr} is not specified; " <>
+              "set it using `#{required_attr}/1`"
         end
       end,
 
@@ -127,34 +126,29 @@ defmodule Elasticfusion.Index do
             {field, _} when is_binary(field) ->
               :ok
             {_, _} ->
-              raise """
-              You must use binaries for mapping fields
-              """
+              raise "You must use binaries for mapping fields"
           end)
 
           mapping = Macro.escape(mapping)
           quote do: (def mapping, do: unquote(mapping))
         _ ->
-          raise """
-          Index mapping is not specified; set it using `mapping/1`
-          """
+          raise "Index mapping is not specified; " <>
+            "set it using `mapping/1`"
       end,
 
       case get_attribute(module, :serialize_fun_ast) do
         fun_ast when not is_nil(fun_ast) ->
           quote do: (def serialize(s), do: unquote(fun_ast).(s))
         _ ->
-          raise """
-          Serialization function is undefined; set it using `serialize/1`
-          """
+          raise "Serialization function is undefined; " <>
+            "set it using `serialize/1`"
       end,
 
       case get_attribute(module, :keyword_field) do
         field when is_binary(field) ->
           if field not in (module |> get_attribute(:mapping) |> Map.keys()) do
-            raise """
-            Keyword field is not present in the mapping defined in `mapping/1`
-            """
+            raise "Keyword field is not present " <>
+              "in the mapping defined in `mapping/1`"
           end
 
           field = Macro.escape(field)
@@ -171,15 +165,11 @@ defmodule Elasticfusion.Index do
             [] ->
               quote do: (def queryable_fields, do: unquote(queryable_fields))
             [field] ->
-              raise """
-              Queryable field #{field} \
-              is not present in the mapping defined in `mapping/1`
-              """
+              raise "Queryable field `#{field}` " <>
+                "is not present in the mapping defined in `mapping/1`"
             fields ->
-              raise """
-              Queryable fields #{Enum.join(fields, ", ")} \
-              are not present in the mapping defined in `mapping/1`
-              """
+              raise "Queryable fields `#{Enum.join(fields, "`, `")}` " <>
+                "are not present in the mapping defined in `mapping/1`"
           end
         _ ->
           quote do: (def queryable_fields, do: [])
