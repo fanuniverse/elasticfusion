@@ -8,7 +8,7 @@ elixir:
   - 1.5.1
 
 otp_release:
-  - 20.0.2
+  - 20.0.1
 
 jdk: openjdk8
 
