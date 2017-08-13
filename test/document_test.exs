@@ -9,21 +9,21 @@ defmodule Elasticfusion.DocumentTest do
   end
 
   defmodule DocumentTestIndex do
-    def index_name(),       do: "document_test_index"
-    def document_type(),    do: "document_test_type"
-    def settings(),         do: %{number_of_shards: 1}
-    def mapping() do
-      %{
-        "tags" => %{type: :keyword},
-        "stars" => %{type: :integer},
-        "date" => %{type: :date}
-      }
-    end
-    def keyword_field(),    do: "tags"
-    def queryable_fields(), do: []
-    def serialize(%Record{tags: tags, stars: stars, date: date}) do
-      %{"tags" => tags, "stars" => stars, "date" => date}
-    end
+    use Elasticfusion.Index
+
+    index_name "document_test_index"
+    document_type "document_test_type"
+    index_settings %{number_of_shards: 1}
+
+    mapping %{
+      "tags" => %{type: :keyword},
+      "stars" => %{type: :integer},
+      "date" => %{type: :date}
+    }
+
+    serialize &(%{"tags" => &1.tags, "stars" => &1.stars, "date" => &1.date})
+
+    keyword_field "tags"
   end
 
   setup do

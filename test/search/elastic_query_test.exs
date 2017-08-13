@@ -5,21 +5,22 @@ defmodule Elasticfusion.Search.ElasticQueryTest do
   import Elasticfusion.Search.ElasticValue, only: [date: 1]
 
   defmodule TestIndex do
-    @behaviour Elasticfusion.Index
+    use Elasticfusion.Index
 
-    def index_name(),       do: "elastic_query_test_index"
-    def document_type(),    do: "elastic_query_test_type"
-    def settings(),         do: %{number_of_shards: 1}
-    def mapping() do
-      %{
-        "tags" => %{type: :keyword},
-        "stars" => %{type: :integer},
-        "date" => %{type: :date}
-      }
-    end
-    def keyword_field(),    do: "tags"
-    def queryable_fields(), do: ["date", "stars"]
-    def serialize(_),       do: nil
+    index_name "elastic_query_test_index"
+    document_type "elastic_query_test_type"
+    index_settings %{number_of_shards: 1}
+
+    mapping %{
+      "tags" => %{type: :keyword},
+      "stars" => %{type: :integer},
+      "date" => %{type: :date}
+    }
+
+    serialize &(%{"tags" => &1.tags, "stars" => &1.stars, "date" => &1.date})
+
+    keyword_field "tags"
+    queryable_fields ~w(stars date)
   end
 
   test "term" do

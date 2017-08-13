@@ -11,7 +11,7 @@ defmodule Elasticfusion.IndexAPI do
     status(Elastix.Index.create(
       Application.get_env(:elasticfusion, :endpoint),
       index.index_name(),
-      index.settings()))
+      index.index_settings()))
   end
 
   def put_mapping(index) do

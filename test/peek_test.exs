@@ -11,21 +11,21 @@ defmodule Elasticfusion.PeekTest do
   end
 
   defmodule PeekTestIndex do
-    def index_name(),       do: "peek_test_index"
-    def document_type(),    do: "peek_test_type"
-    def settings(),         do: %{number_of_shards: 1}
-    def mapping() do
-      %{
-        "id" => %{type: :integer},
-        "stars" => %{type: :integer},
-        "date" => %{type: :date}
-      }
-    end
-    def keyword_field(),    do: ""
-    def queryable_fields(), do: ["stars", "date"]
-    def serialize(%Record{id: id, stars: stars, date: date}) do
-      %{"id" => id, "stars" => stars, "date" => date}
-    end
+    use Elasticfusion.Index
+
+    index_name "peek_test_index"
+    document_type "peek_test_type"
+    index_settings %{number_of_shards: 1}
+
+    mapping %{
+      "id" => %{type: :integer},
+      "stars" => %{type: :integer},
+      "date" => %{type: :date}
+    }
+
+    serialize &(%{"id" => &1.id, "stars" => &1.stars, "date" => &1.date})
+
+    queryable_fields ~w(stars date)
   end
 
   setup do
