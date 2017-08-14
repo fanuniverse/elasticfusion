@@ -5,7 +5,6 @@ defmodule Elasticfusion.Search.ElasticQuery do
   }
 
   import Enum, only: [map: 2]
-  import Elasticfusion.Search.Flattener
   import Elasticfusion.Search.ElasticValue
 
   @doc """
@@ -16,7 +15,7 @@ defmodule Elasticfusion.Search.ElasticQuery do
   `Elasticfusion.Index` behavior.
   """
   def build(expression, index) do
-    transform(flatten(expression), index)
+    transform(expression, index)
   end
 
   def transform({:not, {:and, children}}, index) do

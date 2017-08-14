@@ -34,7 +34,7 @@ defmodule Elasticfusion.Search.ElasticQueryTest do
   end
 
   test "conjunction" do
-    assert build({:and, "gem", {:and, "peridot", "lapis lazuli"}}, TestIndex) ==
+    assert build({:and, ["gem", "peridot", "lapis lazuli"]}, TestIndex) ==
       %{bool: %{must: [
         %{term: %{"tags" => "gem"}},
         %{term: %{"tags" => "peridot"}},
@@ -44,7 +44,7 @@ defmodule Elasticfusion.Search.ElasticQueryTest do
 
   test "negated conjunction" do
     assert build({:not,
-                   {:and, "gem", {:and, "peridot", "lapis lazuli"}}}, TestIndex) ==
+                   {:and, ["gem", "peridot", "lapis lazuli"]}}, TestIndex) ==
       %{bool: %{must_not: [
         %{term: %{"tags" => "gem"}},
         %{term: %{"tags" => "peridot"}},
@@ -53,7 +53,7 @@ defmodule Elasticfusion.Search.ElasticQueryTest do
   end
 
   test "disjunction" do
-    assert build({:or, "gem", {:or, "peridot", "lapis lazuli"}}, TestIndex) ==
+    assert build({:or, ["gem", "peridot", "lapis lazuli"]}, TestIndex) ==
       %{bool: %{should: [
         %{term: %{"tags" => "gem"}},
         %{term: %{"tags" => "peridot"}},
@@ -63,7 +63,7 @@ defmodule Elasticfusion.Search.ElasticQueryTest do
 
   test "negated disjunction" do
     assert build({:not,
-                   {:or, "gem", {:or, "peridot", "lapis lazuli"}}}, TestIndex) ==
+                   {:or, ["gem", "peridot", "lapis lazuli"]}}, TestIndex) ==
       %{bool: %{must_not: [
         %{bool: %{should: [
           %{term: %{"tags" => "gem"}},
@@ -76,21 +76,18 @@ defmodule Elasticfusion.Search.ElasticQueryTest do
   test "complex boolean expression" do
     assert build(
       {:and,
-        {:or,
-          {:or, "ruby", "sapphire"},
-          {:or,
-            {:and, "pearl", "amethyst"},
-            "garnet"}},
-        {:and,
-          {:or,
-            {:or,
-              {:not,
-                {:or,
-                  "peridot",
-                  {:or, "lapis", "lazuli"}}},
-              "steven"},
-            {:or, {:not, "gem"}, "diamond"}},
-        "too much?"}}, TestIndex) ==
+        [{:or,
+           ["ruby",
+            "sapphire",
+            {:and, ["pearl", "amethyst"]},
+            "garnet"]},
+         {:or,
+           [{:not,
+              {:or, ["peridot", "lapis", "lazuli"]}},
+            "steven",
+            {:not, "gem"},
+            "diamond"]},
+         "too much?"]}, TestIndex) ==
       %{bool: %{must: [
         %{bool: %{should: [
           %{term: %{"tags" => "ruby"}},
@@ -118,8 +115,8 @@ defmodule Elasticfusion.Search.ElasticQueryTest do
   test "range queries" do
     assert build(
       {:or,
-        {:field_query, "date", :lt, "feb 3 2017 16:20"},
-        {:field_query, "stars", :gt, "50"}}, TestIndex) ==
+        [{:field_query, "date", :lt, "feb 3 2017 16:20"},
+         {:field_query, "stars", :gt, "50"}]}, TestIndex) ==
     %{bool: %{should: [
       %{range: %{"date" => %{lt: date("feb 3 2017 16:20")}}},
       %{range: %{"stars" => %{gt: "50"}}}
@@ -129,8 +126,8 @@ defmodule Elasticfusion.Search.ElasticQueryTest do
   test "field queries" do
     assert build(
       {:or,
-        {:field_query, "date", nil, "feb 4 2017 16:20"},
-        {:field_query, "stars", nil, "50"}}, TestIndex) ==
+        [{:field_query, "date", nil, "feb 4 2017 16:20"},
+         {:field_query, "stars", nil, "50"}]}, TestIndex) ==
       %{bool: %{should: [
         %{term: %{"date" => date("feb 4 2017 16:20")}},
         %{term: %{"stars" => "50"}}

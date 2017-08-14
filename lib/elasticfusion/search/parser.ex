@@ -7,9 +7,9 @@ defmodule Elasticfusion.Search.Parser do
 
   # query                    = disjunction
   #                          ;
-  # disjunction              = conjunction , [ ( "OR" | "|" ) , disjunction ]
+  # disjunction              = conjunction , { ( "OR" | "|" ) , conjunction }
   #                          ;
-  # conjunction              = boolean clause , [ ( "AND" | "," ) , conjunction ]
+  # conjunction              = boolean clause , { ( "AND" | "," ) , boolean clause }
   #                          ;
   # boolean clause           = ( "NOT" | "-" ) , boolean clause
   #                          | clause
@@ -37,25 +37,41 @@ defmodule Elasticfusion.Search.Parser do
 
   def disjunction(state) do
     {left, state} = conjunction(state)
-    {connective, state} = match(state, :or)
 
-    if connective do
-      {right, state} = disjunction(state)
-      {{:or, left, right}, state}
-    else
-      {left, state}
+    case disjunction_clauses([left], state) do
+      {[single_clause], state} ->
+        {single_clause, state}
+      {clauses, state} ->
+        {{:or, clauses}, state}
+    end
+  end
+  def disjunction_clauses(left_clauses, state) do
+    case match(state, :or) do
+      {nil, state} ->
+        {left_clauses, state}
+      {_connective, state} ->
+        {right_clause, state} = conjunction(state)
+        disjunction_clauses(left_clauses ++ [right_clause], state)
     end
   end
 
   def conjunction(state) do
     {left, state} = boolean_clause(state)
-    {connective, state} = match(state, :and)
 
-    if connective do
-      {right, state} = conjunction(state)
-      {{:and, left, right}, state}
-    else
-      {left, state}
+    case conjunction_clauses([left], state) do
+      {[single_clause], state} ->
+        {single_clause, state}
+      {clauses, state} ->
+        {{:and, clauses}, state}
+    end
+  end
+  def conjunction_clauses(left_clauses, state) do
+    case match(state, :and) do
+      {nil, state} ->
+        {left_clauses, state}
+      {_connective, state} ->
+        {right_clause, state} = boolean_clause(state)
+        conjunction_clauses(left_clauses ++ [right_clause], state)
     end
   end
 
