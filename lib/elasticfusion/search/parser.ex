@@ -1,9 +1,5 @@
 defmodule Elasticfusion.Search.Parser do
-  alias Elasticfusion.Search.Lexer
-  import Elasticfusion.Search.Lexer, only: [
-    match: 2, match_field: 1, match_field_qualifier: 1,
-    left_parentheses: 1, right_parentheses: 2,
-    safe_sting: 1, string_with_balanced_parantheses: 1, quoted_string: 1]
+  import Elasticfusion.Search.Lexer
 
   # query                    = disjunction
   #                          ;
@@ -29,8 +25,8 @@ defmodule Elasticfusion.Search.Parser do
   def query(input, queryable_fields \\ []) do
     {parsed, _final_state} =
       input
-      |> Lexer.initialize(queryable_fields)
-      |> disjunction
+      |> initialize(queryable_fields)
+      |> disjunction()
 
     parsed
   end
@@ -46,7 +42,7 @@ defmodule Elasticfusion.Search.Parser do
     end
   end
   def disjunction_clauses(left_clauses, state) do
-    case match(state, :or) do
+    case match_or(state) do
       {nil, state} ->
         {left_clauses, state}
       {_connective, state} ->
@@ -66,7 +62,7 @@ defmodule Elasticfusion.Search.Parser do
     end
   end
   def conjunction_clauses(left_clauses, state) do
-    case match(state, :and) do
+    case match_and(state) do
       {nil, state} ->
         {left_clauses, state}
       {_connective, state} ->
@@ -76,7 +72,7 @@ defmodule Elasticfusion.Search.Parser do
   end
 
   def boolean_clause(state) do
-    {negation, state} = match(state, :not)
+    {negation, state} = match_not(state)
 
     if negation do
       {body, state} = boolean_clause(state)

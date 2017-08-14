@@ -5,7 +5,6 @@ defmodule Elasticfusion.Search.ElasticQuery do
   }
 
   import Enum, only: [map: 2]
-  import Elasticfusion.Search.ElasticValue
 
   @doc """
   Transforms an expression tree produced by
@@ -34,15 +33,8 @@ defmodule Elasticfusion.Search.ElasticQuery do
 
     %{bool: %{operator => operands}}
   end
-  def transform({:field_query, field, nil, value}, index) do
-    es_value = es_value(value, field, index)
-
-    %{term: %{field => es_value}}
-  end
   def transform({:field_query, field, qualifier, value}, index) do
-    es_value = es_value(value, field, index)
-
-    %{range: %{field => %{qualifier =>  es_value}}}
+    index.transform(field, qualifier, value)
   end
   def transform(keyword_term, index) do
     %{term: %{index.keyword_field() => keyword_term}}

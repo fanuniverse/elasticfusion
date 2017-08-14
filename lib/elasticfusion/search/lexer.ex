@@ -10,38 +10,30 @@ defmodule Elasticfusion.Search.Lexer do
   insignificant whitespace past the match.
   """
 
-  defmodule State,
-    do: defstruct input: "", queryable_fields: []
-
-  @tokens %{
-    and: ~w{AND ,},
-    or: ~w{OR |},
-    not: ~w{NOT -}
-  }
-  @field_qualifiers %{
-    "less than" => :lt,
-    "more than" => :gt,
-    "earlier than" => :lt,
-    "later than" => :gt
-  }
+  @tokens [and: ~w{AND ,}, or: ~w{OR |}, not: ~w{NOT -}]
+  @field_qualifiers ["less than", "more than", "earlier than", "later than"]
   @safe_string_until ~w{AND OR , | " ( )}
   @string_with_balanced_parentheses_until ~w{AND OR , |}
 
   import String, only: [trim: 1, trim_leading: 1]
 
   def initialize(input, queryable_fields) do
-    %State{
+    %{
       input: trim_leading(input),
-      queryable_fields: Enum.map(queryable_fields, &to_string/1)
+      queryable_fields: queryable_fields
     }
   end
 
-  def match(state, token), do: match_pattern(state, @tokens[token])
+  for {key, token} <- @tokens do
+    def unquote(:"match_#{key}")(state),
+      do: match_pattern(state, unquote(token))
+  end
 
-  def match_field(%State{queryable_fields: []} = state), do: {nil, state}
-  def match_field(%State{queryable_fields: fields} = state) do
+  def match_field(%{queryable_fields: []} = state),
+    do: {nil, state}
+  def match_field(%{queryable_fields: fields} = state) do
     case match_pattern(state, fields) do
-      {field, %State{input: rest} = new_state} when is_binary(field) ->
+      {field, %{input: rest} = new_state} when is_binary(field) ->
         case rest do
           ":" <> rest ->
             {field, %{new_state | input: trim_leading(rest)}}
@@ -53,14 +45,8 @@ defmodule Elasticfusion.Search.Lexer do
     end
   end
 
-  def match_field_qualifier(state) do
-    case match_pattern(state, Map.keys(@field_qualifiers)) do
-      {qualifier, state} when is_binary(qualifier) ->
-        {@field_qualifiers[qualifier], state}
-      _ ->
-        {nil, state}
-    end
-  end
+  def match_field_qualifier(state),
+    do: match_pattern(state, @field_qualifiers)
 
   @doc """
   May contain words, numbers, spaces, dashes, and underscores.
@@ -68,11 +54,11 @@ defmodule Elasticfusion.Search.Lexer do
   def safe_sting(state),
     do: match_until(state, @safe_string_until)
 
-  def string_with_balanced_parantheses(%State{} = state) do
+  def string_with_balanced_parantheses(%{} = state) do
     case match_until(state, @string_with_balanced_parentheses_until) do
       {nil, _state} = no_match ->
         no_match
-      {match, %State{input: rest}} ->
+      {match, %{input: rest}} ->
         opening_parens =
           length(String.split(match, "(")) - 1
         balanced =
@@ -88,7 +74,7 @@ defmodule Elasticfusion.Search.Lexer do
     end
   end
 
-  def quoted_string(%State{input: input} = state) do
+  def quoted_string(%{input: input} = state) do
     case Regex.run(~r/"((?:\\.|[^"])*)"/, input, return: :index, capture: :all_but_first) do
       [{1, len}] ->
         <<quotemark::binary-size(1),
@@ -105,7 +91,7 @@ defmodule Elasticfusion.Search.Lexer do
     end
   end
 
-  def left_parentheses(%State{input: input} = state) do
+  def left_parentheses(%{input: input} = state) do
     case Regex.run(~r/^(\(\s*)+/, input, capture: :first) do
       [match] ->
         match_len = byte_size(match)
@@ -122,7 +108,7 @@ defmodule Elasticfusion.Search.Lexer do
     end
   end
 
-  def right_parentheses(%State{input: input} = state, count) do
+  def right_parentheses(%{input: input} = state, count) do
     case Regex.run(~r/^(\)\s*){#{count}}/, input, capture: :first) do
       [match] ->
         match_len = byte_size(match)
@@ -135,7 +121,7 @@ defmodule Elasticfusion.Search.Lexer do
 
   # Internal
 
-  def match_pattern(%State{input: input} = state, pattern) do
+  def match_pattern(%{input: input} = state, pattern) do
     case :binary.match(input, pattern) do
       {0, len} ->
         <<match::binary-size(len), rest::binary>> = input
@@ -145,7 +131,7 @@ defmodule Elasticfusion.Search.Lexer do
     end
   end
 
-  defp match_until(%State{input: input} = state, pattern) do
+  defp match_until(%{input: input} = state, pattern) do
     case :binary.match(input, pattern) do
       {len, _} ->
         <<matched::binary-size(len), rest::binary>> = input

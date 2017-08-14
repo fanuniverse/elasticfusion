@@ -3,7 +3,7 @@ defmodule Elasticfusion.Index do
     quote do
       import Elasticfusion.Index
 
-      @before_compile Elasticfusion.Index
+      @before_compile {Elasticfusion.Index.Compiler, :compile_index}
     end
   end
 
@@ -94,86 +94,5 @@ defmodule Elasticfusion.Index do
   """
   defmacro queryable_fields(fields) do
     quote do: @queryable_fields unquote(fields)
-  end
-
-  # Internal
-
-  import Module, only: [get_attribute: 2]
-
-  defmacro __before_compile__(%{module: module}) do
-    [
-      for required_attr <- ~w(index_name document_type)a do
-        case get_attribute(module, required_attr) do
-          value when not is_nil(value) ->
-            quote do: (def unquote(required_attr)(), do: unquote(value))
-          _ ->
-            raise "#{required_attr} is not specified; " <>
-              "set it using `#{required_attr}/1`"
-        end
-      end,
-
-      case get_attribute(module, :index_settings) do
-        settings when is_map(settings) ->
-          settings = Macro.escape(settings)
-          quote do: (def index_settings, do: unquote(settings))
-        _ ->
-          quote do: (def index_settings, do: %{})
-      end,
-
-      case get_attribute(module, :mapping) do
-        mapping when is_map(mapping) ->
-          Enum.each(mapping, fn
-            {field, _} when is_binary(field) ->
-              :ok
-            {_, _} ->
-              raise "You must use binaries for mapping fields"
-          end)
-
-          mapping = Macro.escape(mapping)
-          quote do: (def mapping, do: unquote(mapping))
-        _ ->
-          raise "Index mapping is not specified; " <>
-            "set it using `mapping/1`"
-      end,
-
-      case get_attribute(module, :serialize_fun_ast) do
-        fun_ast when not is_nil(fun_ast) ->
-          quote do: (def serialize(s), do: unquote(fun_ast).(s))
-        _ ->
-          raise "Serialization function is undefined; " <>
-            "set it using `serialize/1`"
-      end,
-
-      case get_attribute(module, :keyword_field) do
-        field when is_binary(field) ->
-          if field not in (module |> get_attribute(:mapping) |> Map.keys()) do
-            raise "Keyword field is not present " <>
-              "in the mapping defined in `mapping/1`"
-          end
-
-          field = Macro.escape(field)
-          quote do: (def keyword_field, do: unquote(field))
-        _ ->
-          quote do: (def keyword_field, do: "")
-      end,
-
-      case get_attribute(module, :queryable_fields) do
-        queryable_fields when is_list(queryable_fields) ->
-          unmapped = queryable_fields -- Map.keys(get_attribute(module, :mapping))
-
-          case unmapped do
-            [] ->
-              quote do: (def queryable_fields, do: unquote(queryable_fields))
-            [field] ->
-              raise "Queryable field `#{field}` " <>
-                "is not present in the mapping defined in `mapping/1`"
-            fields ->
-              raise "Queryable fields `#{Enum.join(fields, "`, `")}` " <>
-                "are not present in the mapping defined in `mapping/1`"
-          end
-        _ ->
-          quote do: (def queryable_fields, do: [])
-      end
-    ]
   end
 end

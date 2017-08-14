@@ -99,16 +99,16 @@ defmodule Elasticfusion.IndexTest do
       end)
 
     assert_compile_time_raise RuntimeError,
-      "Queryable fields `date`, `score` are not present in the mapping defined in `mapping/1`", (quote do
+      "Type declaration for queryable field `date` is not present in the mapping defined in `mapping/1`", (quote do
         defmodule ErrorTestIndex do
           use Elasticfusion.Index
 
           index_name "error_test_index"
           document_type "error_test_type"
-          mapping %{"field" => %{type: :keyword}}
-          serialize &(%{"field" => &1.field})
+          mapping %{"date" => %{}}
+          serialize &(%{"date" => &1.field})
 
-          queryable_fields ~w(field date score)
+          queryable_fields ~w(date)
         end
       end)
   end

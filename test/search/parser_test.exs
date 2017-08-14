@@ -80,7 +80,7 @@ defmodule Elasticfusion.Search.ParserTest do
   test "simple field queries" do
     assert query("date:3 years ago", []) == "date:3 years ago"
 
-    assert query("date:3 years ago", [:date]) ==
+    assert query("date:3 years ago", ["date"]) ==
       {:field_query, "date", nil, "3 years ago"}
 
     assert query("-date: 3 years ago", ["date"]) ==
@@ -89,14 +89,14 @@ defmodule Elasticfusion.Search.ParserTest do
   end
 
   test "field queries require a delimiter" do
-    assert query("date 3 years ago, date:3 years ago", [:date]) ==
+    assert query("date 3 years ago, date:3 years ago", ["date"]) ==
       {:and,
         ["date 3 years ago",
          {:field_query, "date", nil, "3 years ago"}]}
   end
 
   test "field queries as a part of a complex expression" do
-    assert query("ruby, sapphire, -(date:3 days ago | stars:5 | pearl)", [:date, :stars]) ==
+    assert query("ruby, sapphire, -(date:3 days ago | stars:5 | pearl)", ["date", "stars"]) ==
       {:and,
         ["ruby",
          "sapphire",
@@ -109,15 +109,15 @@ defmodule Elasticfusion.Search.ParserTest do
 
   test "field queries with a qualifier" do
     assert query("date:earlier than 3 years ago", ["date"]) ==
-      {:field_query, "date", :lt, "3 years ago"}
+      {:field_query, "date", "earlier than", "3 years ago"}
 
-    assert query("stars:   more than   50", [:stars]) ==
-      {:field_query, "stars", :gt, "50"}
+    assert query("stars:   more than   50", ["stars"]) ==
+      {:field_query, "stars", "more than", "50"}
 
-    assert query("date: later than 2016, stars:less than 10", [:date, :stars]) ==
+    assert query("date: later than 2016, stars:less than 10", ["date", "stars"]) ==
       {:and,
-        [{:field_query, "date", :gt, "2016"},
-         {:field_query, "stars", :lt, "10"}]}
+        [{:field_query, "date", "later than", "2016"},
+         {:field_query, "stars", "less than", "10"}]}
   end
 
   test "whitespace" do

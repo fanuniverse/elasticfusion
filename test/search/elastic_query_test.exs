@@ -2,7 +2,7 @@ defmodule Elasticfusion.Search.ElasticQueryTest do
   use ExUnit.Case
 
   import Elasticfusion.Search.ElasticQuery
-  import Elasticfusion.Search.ElasticValue, only: [date: 1]
+  import Elasticfusion.Utils, only: [parse_nl_date: 1]
 
   defmodule TestIndex do
     use Elasticfusion.Index
@@ -115,10 +115,10 @@ defmodule Elasticfusion.Search.ElasticQueryTest do
   test "range queries" do
     assert build(
       {:or,
-        [{:field_query, "date", :lt, "feb 3 2017 16:20"},
-         {:field_query, "stars", :gt, "50"}]}, TestIndex) ==
+        [{:field_query, "date", "earlier than", "feb 3 2017 16:20"},
+         {:field_query, "stars", "more than", "50"}]}, TestIndex) ==
     %{bool: %{should: [
-      %{range: %{"date" => %{lt: date("feb 3 2017 16:20")}}},
+      %{range: %{"date" => %{lt: parse_nl_date("feb 3 2017 16:20")}}},
       %{range: %{"stars" => %{gt: "50"}}}
     ]}}
   end
@@ -129,7 +129,7 @@ defmodule Elasticfusion.Search.ElasticQueryTest do
         [{:field_query, "date", nil, "feb 4 2017 16:20"},
          {:field_query, "stars", nil, "50"}]}, TestIndex) ==
       %{bool: %{should: [
-        %{term: %{"date" => date("feb 4 2017 16:20")}},
+        %{term: %{"date" => parse_nl_date("feb 4 2017 16:20")}},
         %{term: %{"stars" => "50"}}
       ]}}
   end
