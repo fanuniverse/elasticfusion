@@ -115,7 +115,7 @@ defmodule Elasticfusion.Search.LexerTest do
 
   defp run(fun, input) when is_function(fun, 1) and is_binary(input) do
     input
-    |> Lexer.initialize([])
+    |> Lexer.initialize("tags", [], fn(_, _, _) -> nil end)
     |> fun.()
   end
 end

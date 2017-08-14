@@ -5,16 +5,15 @@ defmodule Elasticfusion.Search.Builder do
   """
 
   alias Elasticfusion.Search.Parser
-  alias Elasticfusion.Search.ElasticQuery
 
   @doc """
   Returns an Elasticsearch query parsed from a given string.
   """
   def parse_search_string(str, index) do
-    query =
-      str
-      |> Parser.query(index.queryable_fields())
-      |> ElasticQuery.build(index)
+    query = Parser.query(str,
+      index.keyword_field(),
+      index.queryable_fields(),
+      &index.transform/3)
 
     # NOTE IMPORTANT: The subset of queries that is currently supported
     # is executed in the filter context, which is faster

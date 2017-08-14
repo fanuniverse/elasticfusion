@@ -17,10 +17,12 @@ defmodule Elasticfusion.Search.Lexer do
 
   import String, only: [trim: 1, trim_leading: 1]
 
-  def initialize(input, queryable_fields) do
+  def initialize(input, keyword_field, queryable_fields, field_transform) do
     %{
       input: trim_leading(input),
-      queryable_fields: queryable_fields
+      keyword_field: keyword_field,
+      queryable_fields: queryable_fields,
+      field_transform: field_transform
     }
   end
 

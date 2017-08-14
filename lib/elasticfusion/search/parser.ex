@@ -22,10 +22,10 @@ defmodule Elasticfusion.Search.Parser do
   #                          | string with balanced parentheses
   #                          ;
 
-  def query(input, queryable_fields \\ []) do
+  def query(input, keyword_field, queryable_fields, field_transform) do
     {parsed, _final_state} =
       input
-      |> initialize(queryable_fields)
+      |> initialize(keyword_field, queryable_fields, field_transform)
       |> disjunction()
 
     parsed
@@ -38,7 +38,7 @@ defmodule Elasticfusion.Search.Parser do
       {[single_clause], state} ->
         {single_clause, state}
       {clauses, state} ->
-        {{:or, clauses}, state}
+        {%{bool: %{should: clauses}}, state}
     end
   end
   def disjunction_clauses(left_clauses, state) do
@@ -58,7 +58,7 @@ defmodule Elasticfusion.Search.Parser do
       {[single_clause], state} ->
         {single_clause, state}
       {clauses, state} ->
-        {{:and, clauses}, state}
+        {%{bool: %{must: clauses}}, state}
     end
   end
   def conjunction_clauses(left_clauses, state) do
@@ -75,11 +75,15 @@ defmodule Elasticfusion.Search.Parser do
     {negation, state} = match_not(state)
 
     if negation do
-      {body, state} = boolean_clause(state)
-
-      case body do
-        {:not, expression} -> {expression, state}
-        expression -> {{:not, expression}, state}
+      case boolean_clause(state) do
+        {%{bool: %{must: conj_clauses}}, state} ->
+          {%{bool: %{must_not: List.wrap(conj_clauses)}}, state}
+        {%{bool: %{must_not: [clause]}}, state} ->
+          {clause, state}
+        {%{bool: %{must_not: clauses}}, state} ->
+          {%{bool: %{must: List.wrap(clauses)}}, state}
+        {expression, state} ->
+          {%{bool: %{must_not: List.wrap(expression)}}, state}
       end
     else
       clause(state)
@@ -113,25 +117,24 @@ defmodule Elasticfusion.Search.Parser do
     end
   end
 
-  def field_query(state) do
-    {field, state} = match_field(state)
+  def field_query(%{field_transform: field_transform} = state) do
+    case match_field(state) do
+      {field, state} when not is_nil(field) ->
+        {qualifier, state} = match_field_qualifier(state)
+        {query, state} = safe_sting(state)
 
-    if field do
-      {qualifier, state} = match_field_qualifier(state)
-      {query, state} = safe_sting(state)
-
-      {{:field_query, field, qualifier, query}, state}
-    else
-      {nil, state}
+        {field_transform.(field, qualifier, query), state}
+      {nil, state} ->
+        {nil, state}
     end
   end
 
-  def term(state) do
+  def term(%{keyword_field: keyword_field} = state) do
     {term, state} = case quoted_string(state) do
       {s, _} = quoted_string when not is_nil(s) -> quoted_string
       _not_quoted_string -> string_with_balanced_parantheses(state)
     end
 
-    {String.downcase(term), state}
+    {%{term: %{keyword_field => String.downcase(term)}}, state}
   end
 end
