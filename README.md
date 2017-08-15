@@ -26,7 +26,7 @@ Add `elasticfusion` to your list of dependencies in `mix.exs`:
 
 ```elixir
 def deps do
-  [{:elasticfusion, git: "https://github.com/fanuniverse/elasticfusion"}]
+  [{:elasticfusion, github: "fanuniverse/elasticfusion", tag: "1.0.0"}]
 end
 ```
 
