@@ -67,6 +67,8 @@ defmodule Elasticfusion.Index.Compiler do
           []
       end,
 
+      custom_field_transforms(module),
+
       queryable_fields(module)
     ]
   end
@@ -96,18 +98,31 @@ defmodule Elasticfusion.Index.Compiler do
 
     for {q, q_text} <- qualifiers do
       quote do:
-        def transform(unquote(query), unquote(q_text), value),
+        def transform(unquote(query), unquote(q_text), value, _),
           do: %{range: %{unquote(field) => %{unquote(q) => unquote(value_transform)}}}
     end ++ [
       quote do:
-        def transform(unquote(query), _, value),
+        def transform(unquote(query), _, value, _),
           do: %{term: %{unquote(field) => unquote(value_transform)}}
     ]
   end
 
+  def custom_field_transforms(module) do
+    transforms = get_attribute(module, :transforms) || []
+
+    for {field, fun_ast} <- transforms do
+      quote do:
+        def transform(unquote(field), qualifier, value, context),
+          do: unquote(fun_ast).(qualifier, value, context)
+    end
+  end
+
   def queryable_fields(module) do
-    fields = get_attribute(module, :queryable_fields) || []
-    fields = Macro.escape(fields)
+    queryable_fields = get_attribute(module, :queryable_fields) || []
+    field_transforms = (get_attribute(module, :transforms) || [])
+      |> Enum.map(fn({field, _}) -> field end)
+
+    fields = Macro.escape(queryable_fields ++ field_transforms)
 
     quote do
       def queryable_fields, do: unquote(fields)

@@ -16,9 +16,19 @@ defmodule Elasticfusion.Index.CompilerTest do
 
     serialize &(%{"tags" => &1.tags, "stars" => &1.stars, "date" => &1.date})
 
+    keyword_field "tags"
+
     queryable_fields ~w(date stars)
 
-    keyword_field "tags"
+    def_transform "starred by", fn
+      (_, value, _) ->
+        %{term: %{stars: value}}
+    end
+
+    def_transform "found in", fn
+      (_, "my favorites", %{name: username}) ->
+        %{term: %{tags: "faved by #{username}"}}
+    end
   end
 
   test "compiles index_name/0, document_type/0, index_settings/0" do
@@ -27,8 +37,9 @@ defmodule Elasticfusion.Index.CompilerTest do
     assert CompilerTestIndex.index_settings() == %{number_of_shards: 1}
   end
 
-  test "compiles queryable_fields/0" do
-    assert CompilerTestIndex.queryable_fields() == ~w(date stars)
+  test "compiles queryable_fields/0 that includes transforms" do
+    assert CompilerTestIndex.queryable_fields() ==
+      ["date", "stars", "found in", "starred by"]
   end
 
   test "compiles serialize/1" do
@@ -39,23 +50,34 @@ defmodule Elasticfusion.Index.CompilerTest do
 
   test "defines transform/3 clauses for queryable_fields" do
     import Elasticfusion.Utils, only: [parse_nl_date: 1]
+    import CompilerTestIndex, only: [transform: 4]
 
-    assert CompilerTestIndex.transform("date", "earlier than", "2 months ago") ==
+    assert transform("date", "earlier than", "2 months ago", nil) ==
       %{range: %{"date" => %{lt: parse_nl_date("2 months ago")}}}
 
-    assert CompilerTestIndex.transform("date", "later than", "2 months ago") ==
+    assert transform("date", "later than", "2 months ago", nil) ==
       %{range: %{"date" => %{gt: parse_nl_date("2 months ago")}}}
 
-    assert CompilerTestIndex.transform("date", nil, "2 months ago") ==
+    assert transform("date", nil, "2 months ago", nil) ==
       %{term: %{"date" => parse_nl_date("2 months ago")}}
 
-    assert CompilerTestIndex.transform("stars", "less than", "10") ==
+    assert transform("stars", "less than", "10", nil) ==
       %{range: %{"stars" => %{lt: "10"}}}
 
-    assert CompilerTestIndex.transform("stars", "more than", "10") ==
+    assert transform("stars", "more than", "10", nil) ==
       %{range: %{"stars" => %{gt: "10"}}}
 
-    assert CompilerTestIndex.transform("stars", nil, "10") ==
+    assert transform("stars", nil, "10", nil) ==
       %{term: %{"stars" => "10"}}
+  end
+
+  test "defines transform/3 clauses for custom transforms" do
+    import CompilerTestIndex, only: [transform: 4]
+
+    assert transform("starred by", nil, "5", nil) ==
+      %{term: %{stars: "5"}}
+
+    assert transform("found in", nil, "my favorites", %{name: "cool username"}) ==
+      %{term: %{tags: "faved by cool username"}}
   end
 end

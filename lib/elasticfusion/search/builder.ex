@@ -9,11 +9,11 @@ defmodule Elasticfusion.Search.Builder do
   @doc """
   Returns an Elasticsearch query parsed from a given string.
   """
-  def parse_search_string(str, index) do
+  def parse_search_string(str, index, external_context \\ nil) do
     query = Parser.query(str,
       index.keyword_field(),
       index.queryable_fields(),
-      &index.transform/3)
+      &index.transform(&1, &2, &3, external_context))
 
     # NOTE IMPORTANT: The subset of queries that is currently supported
     # is executed in the filter context, which is faster

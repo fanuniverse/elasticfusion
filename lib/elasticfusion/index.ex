@@ -3,6 +3,8 @@ defmodule Elasticfusion.Index do
     quote do
       import Elasticfusion.Index
 
+      @transforms []
+
       @before_compile {Elasticfusion.Index.Compiler, :compile_index}
     end
   end
@@ -94,5 +96,66 @@ defmodule Elasticfusion.Index do
   """
   defmacro queryable_fields(fields) do
     quote do: @queryable_fields unquote(fields)
+  end
+
+  @doc """
+  Defines a custom field query transform that produces
+  an Elasticsearch query for a given field,
+  qualifier (if present), value, and /external context/.
+
+  The first argument specifies the field as encountered
+  in a textual query (field is the part before the ':',
+  e.g. "created by" for "created by: some user").
+
+  The second argument is a function that takes 3 arguments,
+  * a qualifier ("less than", "more than", "earlier than",
+    "later than", or `nil`),
+  * a value (value is the part after the ':' and an optional
+    qualifier, e.g. "5" for "stars: less than 5"),
+  * and /external context/ (see below),
+
+  returning an Elasticsearch query.
+
+  /external context/ is set by the caller of
+  `Elasticfusion.Search.Builder.parse_search_string/3`.
+
+  Consider the following examples:
+
+  ```
+  # "uploaded by: Cool Username"
+  # =>
+  # %{term: %{created_by: "cool username"}}
+
+  def_transform "uploaded by", fn(_, username, _) ->
+    indexed_username = String.downcase(username)
+    %{term: %{created_by: indexed_username}}
+  end
+
+  # "found in: my favorites"
+  # (external context: %User{name: "cool username"})
+  # =>
+  # %{term: %{favorited_by: "cool username"}}
+
+  def_transform "found in", fn(_, "my favorites", %User{name: name}) ->
+    %{term: %{favorited_by: name}}
+  end
+
+  # "starred by: less than 5 people"
+  # =>
+  # %{range: %{stars: %{lt: "5"}}}
+
+  def_transform "starred by", fn
+    ("less than", value, _) ->
+      [_, count] = Regex.run(~r/(\\d+) people/, value)
+      %{range: %{stars: %{lt: count}}}
+    ("more than", value, _) ->
+      [_, count] = Regex.run(~r/(\\d+) people/, value)
+      %{range: %{stars: %{gt: count}}}
+  end
+  ```
+  """
+  defmacro def_transform(field, transform_fun_ast) do
+    ast = Macro.escape(transform_fun_ast)
+    quote do: @transforms [{unquote(field), unquote(ast)} | @transforms]
   end
 end

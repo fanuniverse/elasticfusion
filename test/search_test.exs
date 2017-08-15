@@ -26,7 +26,18 @@ defmodule Elasticfusion.SearchTest do
     serialize &(%{"tags" => &1.tags, "stars" => &1.stars, "date" => &1.date})
 
     keyword_field "tags"
+
     queryable_fields ~w(stars date)
+
+    def_transform "found in", fn
+      (_, "my favorites", %{name: username}) -> %{term: %{tags: username}}
+    end
+
+    def_transform "times starred", fn
+      ("less than", value, _) -> %{range: %{stars: %{lt: value}}}
+      ("more than", value, _) -> %{range: %{stars: %{gt: value}}}
+      (_, value, _) -> %{term: %{stars: value}}
+    end
   end
 
   setup do
@@ -120,6 +131,38 @@ defmodule Elasticfusion.SearchTest do
       Builder.add_filter_clause(query, %{range: %{stars: %{lt: 20}}})
 
     assert Search.find_ids(query, SearchTestIndex) == {:ok, ["9"], 1}
+  end
+
+  test "custom transforms" do
+    index %Record{id: 100,
+      tags: ["amethyst"], stars: 120, date: ~N[2017-02-03 16:20:00]}
+    index %Record{id: 101,
+      tags: ["amethyst"], stars: 140, date: ~N[2017-02-03 16:20:00]}
+
+    assert "found in: my favorites"
+      |> Builder.parse_search_string(SearchTestIndex, %{name: "amethyst"})
+      |> Search.find_ids(SearchTestIndex) ==
+        {:ok, ["100", "101"], 2}
+
+    assert "found in: my favorites"
+      |> Builder.parse_search_string(SearchTestIndex, %{name: "peridot"})
+      |> Search.find_ids(SearchTestIndex) ==
+        {:ok, [], 0}
+
+    assert "times starred: less than 140"
+      |> Builder.parse_search_string(SearchTestIndex)
+      |> Search.find_ids(SearchTestIndex) ==
+        {:ok, ["100"], 1}
+
+    assert "times starred: more than 100"
+      |> Builder.parse_search_string(SearchTestIndex)
+      |> Search.find_ids(SearchTestIndex) ==
+        {:ok, ["100", "101"], 2}
+
+    assert "times starred: 140"
+      |> Builder.parse_search_string(SearchTestIndex)
+      |> Search.find_ids(SearchTestIndex) ==
+        {:ok, ["101"], 1}
   end
 
   def index(%Record{} = record) do
