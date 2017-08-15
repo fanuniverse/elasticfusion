@@ -7,7 +7,7 @@ defmodule Elasticfusion.Search.Builder do
   alias Elasticfusion.Search.Parser
 
   @doc """
-  Returns an Elasticsearch query parsed from a given string.
+  Constructs an Elasticsearch query from a given string.
   """
   def parse_search_string(str, index, external_context \\ nil) do
     query = Parser.query(str,
@@ -20,6 +20,27 @@ defmodule Elasticfusion.Search.Builder do
     # (does not compute _score and can be cached)
     # but cannot be used for relevance sorting and wildcard queries.
     %{query: %{bool: %{filter: [query]}}}
+  end
+
+  @doc """
+  Constructs a `more_like_this` query that matches documents sharing
+  keywords with the one specified by `id`.
+  Requires the index definition to have `keyword_field` set.
+
+  Accepts the following options:
+  * `:minimum_should_match`: the minimum number of keywords (terms)
+    shared between the source document and results (default is 2)
+  """
+  def more_like_this(id, index, opts \\ []) do
+    minimum_should_match = Keyword.get(opts, :minimum_should_match, 2)
+
+    %{query: %{bool: %{must: %{more_like_this: %{
+      fields: [index.keyword_field()],
+      like: [%{_type: index.document_type(), _id: id}],
+      min_term_freq: 1,
+      min_doc_freq: 1,
+      minimum_should_match: minimum_should_match
+    }}}}}
   end
 
   @doc """
