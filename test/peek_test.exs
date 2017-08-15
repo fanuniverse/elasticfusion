@@ -18,14 +18,14 @@ defmodule Elasticfusion.PeekTest do
     index_settings %{number_of_shards: 1}
 
     mapping %{
-      "id" => %{type: :integer},
-      "stars" => %{type: :integer},
-      "date" => %{type: :date}
+      id: %{type: :integer},
+      stars: %{type: :integer},
+      date: %{type: :date}
     }
 
-    serialize &(%{"id" => &1.id, "stars" => &1.stars, "date" => &1.date})
+    serialize &(%{id: &1.id, stars: &1.stars, date: &1.date})
 
-    queryable_fields ~w(stars date)
+    queryable_fields [stars: "stars", date: "date"]
   end
 
   setup do
@@ -41,7 +41,7 @@ defmodule Elasticfusion.PeekTest do
 
     query =
       %{query: %{match_all: %{}}}
-      |> Builder.add_sort("date", :asc)
+      |> Builder.add_sort(:date, :asc)
 
     assert Peek.next_id(r1, query, PeekTestIndex) == {:ok, "2"}
     assert Peek.next_id(r2, query, PeekTestIndex) == {:ok, "3"}
@@ -50,8 +50,8 @@ defmodule Elasticfusion.PeekTest do
     # using `id` as a tiebreaker for non-unique field
     query =
       %{query: %{match_all: %{}}}
-      |> Builder.add_sort("stars", :desc)
-      |> Builder.add_sort("id", :asc)
+      |> Builder.add_sort(:stars, :desc)
+      |> Builder.add_sort(:id, :asc)
 
     assert Peek.next_id(r1, query, PeekTestIndex) == {:ok, "2"}
     assert Peek.next_id(r2, query, PeekTestIndex) == {:ok, "3"}
@@ -66,7 +66,7 @@ defmodule Elasticfusion.PeekTest do
 
     query =
       %{query: %{match_all: %{}}}
-      |> Builder.add_sort("date", :asc)
+      |> Builder.add_sort(:date, :asc)
 
     assert Peek.previous_id(r4, query, PeekTestIndex) == {:ok, "3"}
     assert Peek.previous_id(r3, query, PeekTestIndex) == {:ok, "2"}
@@ -75,8 +75,8 @@ defmodule Elasticfusion.PeekTest do
     # using `id` as a tiebreaker for non-unique field
     query =
       %{query: %{match_all: %{}}}
-      |> Builder.add_sort("stars", :desc)
-      |> Builder.add_sort("id", :asc)
+      |> Builder.add_sort(:stars, :desc)
+      |> Builder.add_sort(:id, :asc)
 
     assert Peek.previous_id(r4, query, PeekTestIndex) == {:ok, "3"}
     assert Peek.previous_id(r3, query, PeekTestIndex) == {:ok, "2"}

@@ -34,7 +34,7 @@ defmodule Elasticfusion.Index do
   See https://www.elastic.co/guide/en/elasticsearch/reference/current/index-modules.html
   for available settings.
 
-  Default settings for Elasticsearch indexes are
+  Default settings for Elasticsearch indexes are:
   ```
   %{
     number_of_shards: 5,
@@ -50,11 +50,12 @@ defmodule Elasticfusion.Index do
   Defines explicit mapping for the document type,
   set on index (re)creation.
 
-  Specify field names as binaries and settings as atoms, e.g.:
+  An example:
+
   ```
   %{
-    "tags" => %{type: :keyword},
-    "date" => %{type: :date}
+    tags: %{type: :keyword},
+    date: %{type: :date}
   }
   ```
 
@@ -80,8 +81,18 @@ defmodule Elasticfusion.Index do
   end
 
   @doc """
-  Defines field used for keyword queries
-  (e.g. "keyword one, keyword two").
+  Defines the mapping field used for keyword queries.
+
+  An example:
+
+  Given `:tag_names` as the keyword field,
+  "tag one, tag two" is parsed as:
+  ```
+  %{bool: %{must: [
+    %{term: %{tag_names: "tag one"}},
+    %{term: %{tag_names: "tag two"}}
+  ]}}
+  ```
   """
   defmacro keyword_field(name) do
     quote do: @keyword_field unquote(name)
@@ -89,7 +100,8 @@ defmodule Elasticfusion.Index do
 
   @doc """
   Defines fields that can occur in string queries
-  (e.g. "field: value").
+  (e.g. "field: value"), specified as a keyword list of
+  `{:mapping_field, "text field"}`.
 
   Depending on the type specified in `mapping`,
   field values can be parsed as dates, numbers, or literals.
@@ -107,7 +119,7 @@ defmodule Elasticfusion.Index do
   in a textual query (field is the part before the ':',
   e.g. "created by" for "created by: some user").
 
-  The second argument is a function that takes 3 arguments,
+  The second argument is a function that takes 3 arguments:
   * a qualifier ("less than", "more than", "earlier than",
     "later than", or `nil`),
   * a value (value is the part after the ':' and an optional

@@ -18,16 +18,16 @@ defmodule Elasticfusion.SearchTest do
     index_settings %{number_of_shards: 1}
 
     mapping %{
-      "tags" => %{type: :keyword},
-      "stars" => %{type: :integer},
-      "date" => %{type: :date}
+      tags: %{type: :keyword},
+      stars: %{type: :integer},
+      date: %{type: :date}
     }
 
-    serialize &(%{"tags" => &1.tags, "stars" => &1.stars, "date" => &1.date})
+    serialize &(%{tags: &1.tags, stars: &1.stars, date: &1.date})
 
-    keyword_field "tags"
+    keyword_field :tags
 
-    queryable_fields ~w(stars date)
+    queryable_fields [stars: "stars", date: "date"]
 
     def_transform "found in", fn
       (_, "my favorites", %{name: username}) -> %{term: %{tags: username}}

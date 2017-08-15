@@ -54,15 +54,15 @@ defmodule Elasticfusion.IndexTest do
     assert ErrorTestIndex.index_settings() == %{}
   end
 
-  test "mapping/1 ensures that all keys are binaries" do
+  test "mapping/1 ensures that all keys are atoms" do
     assert_compile_time_raise RuntimeError,
-      "You must use binaries for mapping fields", (quote do
+      "You must use atoms for mapping fields", (quote do
         defmodule ErrorTestIndex do
           use Elasticfusion.Index
 
           index_name "error_test_index"
           document_type "error_test_type"
-          mapping %{field: %{type: :keyword}}
+          mapping %{"field" => %{type: :keyword}}
         end
       end)
   end
@@ -75,10 +75,10 @@ defmodule Elasticfusion.IndexTest do
 
           index_name "error_test_index"
           document_type "error_test_type"
-          mapping %{"field" => %{type: :keyword}}
-          serialize &(%{"field" => &1.field})
+          mapping %{field: %{type: :keyword}}
+          serialize &(%{field: &1.field})
 
-          keyword_field "fieldd"
+          keyword_field :fieldd
         end
       end)
   end
@@ -91,10 +91,10 @@ defmodule Elasticfusion.IndexTest do
 
           index_name "error_test_index"
           document_type "error_test_type"
-          mapping %{"field" => %{type: :keyword}}
-          serialize &(%{"field" => &1.field})
+          mapping %{field: %{type: :keyword}}
+          serialize &(%{field: &1.field})
 
-          queryable_fields ~w(field date)
+          queryable_fields [field: "field", date: "date"]
         end
       end)
 
@@ -105,10 +105,10 @@ defmodule Elasticfusion.IndexTest do
 
           index_name "error_test_index"
           document_type "error_test_type"
-          mapping %{"date" => %{}}
-          serialize &(%{"date" => &1.field})
+          mapping %{date: %{}}
+          serialize &(%{date: &1.field})
 
-          queryable_fields ~w(date)
+          queryable_fields [date: "date"]
         end
       end)
   end

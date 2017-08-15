@@ -187,24 +187,24 @@ defmodule Elasticfusion.Search.ParserTest do
   test "field queries with a qualifier" do
     assert query("date:earlier than 3 years ago", "tags", ["date"],
       fn
-        ("date", "earlier than", val) -> %{range: %{"date" => %{lt: val}}}
+        ("date", "earlier than", val) -> %{range: %{date: %{lt: val}}}
       end) ==
-      %{range: %{"date" => %{lt: "3 years ago"}}}
+      %{range: %{date: %{lt: "3 years ago"}}}
 
     assert query("stars:   more than   50", "tags", ["stars"],
       fn
-        ("stars", "more than", val) -> %{range: %{"stars" => %{gt: val}}}
+        ("stars", "more than", val) -> %{range: %{stars: %{gt: val}}}
       end) ==
-      %{range: %{"stars" => %{gt: "50"}}}
+      %{range: %{stars: %{gt: "50"}}}
 
     assert query("date: later than 2016, stars:less than 10", "tags",
       ["date", "stars"], fn
-        ("date", "later than", val) -> %{range: %{"date" => %{gt: val}}}
-        ("stars", "less than", val) -> %{range: %{"stars" => %{lt: val}}}
+        ("date", "later than", val) -> %{range: %{date: %{gt: val}}}
+        ("stars", "less than", val) -> %{range: %{stars: %{lt: val}}}
       end) ==
       %{bool: %{must: [
-        %{range: %{"date" => %{gt: "2016"}}},
-        %{range: %{"stars" => %{lt: "10"}}}
+        %{range: %{date: %{gt: "2016"}}},
+        %{range: %{stars: %{lt: "10"}}}
       ]}}
   end
 

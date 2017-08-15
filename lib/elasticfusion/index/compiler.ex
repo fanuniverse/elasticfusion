@@ -24,10 +24,10 @@ defmodule Elasticfusion.Index.Compiler do
       case get_attribute(module, :mapping) do
         mapping when is_map(mapping) ->
           Enum.each(mapping, fn
-            {field, _} when is_binary(field) ->
+            {field, _} when is_atom(field) ->
               :ok
             {_, _} ->
-              raise "You must use binaries for mapping fields"
+              raise "You must use atoms for mapping fields"
           end)
 
           mapping = Macro.escape(mapping)
@@ -46,7 +46,7 @@ defmodule Elasticfusion.Index.Compiler do
       end,
 
       case get_attribute(module, :keyword_field) do
-        field when is_binary(field) ->
+        field when not is_nil(field) ->
           if field not in (module |> get_attribute(:mapping) |> Map.keys()) do
             raise "Keyword field is not present " <>
               "in the mapping defined in `mapping/1`"
@@ -60,8 +60,8 @@ defmodule Elasticfusion.Index.Compiler do
 
       case get_attribute(module, :queryable_fields) do
         fields when is_list(fields) ->
-          for field <- fields do
-            field_transform(field, field, get_attribute(module, :mapping))
+          for {field, query} <- fields do
+            field_transform(field, query, get_attribute(module, :mapping))
           end
         _ ->
           []
@@ -118,9 +118,10 @@ defmodule Elasticfusion.Index.Compiler do
   end
 
   def queryable_fields(module) do
-    queryable_fields = get_attribute(module, :queryable_fields) || []
+    queryable_fields = (get_attribute(module, :queryable_fields) || [])
+      |> Enum.map(fn({_, query}) -> query end)
     field_transforms = (get_attribute(module, :transforms) || [])
-      |> Enum.map(fn({field, _}) -> field end)
+      |> Enum.map(fn({query, _}) -> query end)
 
     fields = Macro.escape(queryable_fields ++ field_transforms)
 

@@ -10,7 +10,8 @@ defmodule Elasticfusion.IndexAPITest do
     document_type "index_api_test_type"
     index_settings %{number_of_shards: 2}
 
-    mapping %{"inserted_at" => %{type: :date}}
+    mapping %{inserted_at: %{type: :date}}
+
     serialize fn(_) -> nil end
   end
 

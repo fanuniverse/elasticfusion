@@ -16,14 +16,14 @@ defmodule Elasticfusion.DocumentTest do
     index_settings %{number_of_shards: 1}
 
     mapping %{
-      "tags" => %{type: :keyword},
-      "stars" => %{type: :integer},
-      "date" => %{type: :date}
+      tags: %{type: :keyword},
+      stars: %{type: :integer},
+      date: %{type: :date}
     }
 
-    serialize &(%{"tags" => &1.tags, "stars" => &1.stars, "date" => &1.date})
+    serialize &(%{tags: &1.tags, stars: &1.stars, date: &1.date})
 
-    keyword_field "tags"
+    keyword_field :tags
   end
 
   setup do
