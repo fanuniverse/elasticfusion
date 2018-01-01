@@ -5,15 +5,15 @@ sudo: false
 language: elixir
 
 elixir:
-  - 1.5.1
+  - 1.5.3
 
 otp_release:
-  - 20.0.1
+  - 20.2
 
 jdk: openjdk8
 
 env:
-  - ES_VERSION=5.5.1 ES_DOWNLOAD_URL=https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-${ES_VERSION}.tar.gz
+  - ES_VERSION=6.1.1 ES_DOWNLOAD_URL=https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-${ES_VERSION}.tar.gz
 
 install:
   - wget ${ES_DOWNLOAD_URL}
